@@ -21,6 +21,7 @@ describe("api module surface", () => {
       "runTests",
       "endSession",
       "deleteSession",
+      "deleteAllSessions",
       "getBoilerplate",
       "speak",
     ];
