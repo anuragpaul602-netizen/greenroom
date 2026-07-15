@@ -219,7 +219,15 @@ export function useInterviewSession({ track, boardRef, onQuestionContext }) {
     isMutedRef.current = nowMuted;
     setIsMuted(nowMuted);
     if (nowMuted) stopSpeech();
-    else if (lastInterviewerTextRef.current) speak(lastInterviewerTextRef.current);
+  };
+
+  // Re-reads the most recent interviewer message from the top. stopSpeech() first:
+  // speak() only tracks the latest Audio element, so starting a second one while the
+  // first is still playing would leave the first unreachable and audible.
+  const replayLastQuestion = () => {
+    if (isMutedRef.current || !lastInterviewerTextRef.current) return;
+    stopSpeech();
+    speak(lastInterviewerTextRef.current);
   };
 
   return {
@@ -242,6 +250,7 @@ export function useInterviewSession({ track, boardRef, onQuestionContext }) {
     handleSend,
     handleEnd,
     toggleMute,
+    replayLastQuestion,
     stop,
   };
 }
