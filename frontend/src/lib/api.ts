@@ -123,6 +123,9 @@ export const api = {
   deleteSession: (sessionId: string) =>
     request<{ deleted: string }>(`/interview/${sessionId}`, { method: "DELETE" }),
 
+  deleteAllSessions: () =>
+    request<{ deleted: number }>("/interview/sessions/all", { method: "DELETE" }),
+
   getBoilerplate: (sessionId: string, language: string) =>
     request<BoilerplateResponse>(
       `/interview/${sessionId}/boilerplate?language=${encodeURIComponent(language)}`

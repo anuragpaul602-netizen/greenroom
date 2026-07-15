@@ -298,6 +298,34 @@ def delete_session(session_id: str, user: AuthenticatedUser = Depends(get_curren
     return {"deleted": session_id}
 
 
+@router.delete("/sessions/all")
+async def delete_all_sessions(user: AuthenticatedUser = Depends(get_current_user)):
+    """Deletes every session belonging to the caller, transcripts and scores included.
+
+    The two-segment path is deliberate: a single-segment "/sessions" would be captured
+    by the "/{session_id}" route above unless this one is declared first, and relying on
+    declaration order is a trap for whoever adds the next route.
+
+    Ownership is the .eq("user_id") scope rather than check_ownership -- there is no one
+    session to own here, and the backend's service-role key bypasses RLS, so this filter
+    is the only thing standing between a caller and someone else's data. Keep it.
+    """
+    sb = get_supabase()
+    if not sb:
+        return {"deleted": 0}
+
+    resp = sb.table("sessions").select("id").eq("user_id", user.id).execute()
+    ids = [row["id"] for row in (resp.data or [])]
+    if not ids:
+        return {"deleted": 0}
+
+    for sid in ids:
+        evict(sid)
+    # messages and evaluations follow via on-delete-cascade.
+    sb.table("sessions").delete().eq("user_id", user.id).execute()
+    return {"deleted": len(ids)}
+
+
 @router.post("/end", response_model=EndSessionResponse)
 async def end_session(req: EndSessionRequest, user: AuthenticatedUser = Depends(get_current_user)):
     async with session_lock(req.session_id):

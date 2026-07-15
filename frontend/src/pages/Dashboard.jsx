@@ -45,6 +45,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmingDeleteAll, setConfirmingDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -86,6 +89,20 @@ export default function Dashboard() {
       alert("Failed to delete session. Please try again.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    setDeleteAllError(null);
+    try {
+      await api.deleteAllSessions();
+      setSessions([]);
+      setConfirmingDeleteAll(false);
+    } catch {
+      setDeleteAllError("Couldn't delete your sessions. Nothing was changed — please try again.");
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -160,8 +177,62 @@ export default function Dashboard() {
             </div>
           )}
 
+          {confirmingDeleteAll && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+              onClick={(e) => { if (e.target === e.currentTarget && !deletingAll) setConfirmingDeleteAll(false); }}
+            >
+              <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-panel p-6 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-xl">Delete all sessions?</h2>
+                  <button
+                    onClick={() => setConfirmingDeleteAll(false)}
+                    disabled={deletingAll}
+                    className="text-mute transition hover:text-cream disabled:opacity-50"
+                  >
+                    ✕
+                  </button>
+                </div>
+                {/* The table above is capped at the 10 most recent, so it is not a
+                    preview of what gets deleted — say so rather than name a count. */}
+                <p className="mt-3 text-sm text-mute">
+                  This permanently deletes <strong className="text-cream">every session on your account</strong>,
+                  including any older ones not listed here, along with their full transcripts and scores.
+                </p>
+                <p className="mt-2 text-sm text-coral">This cannot be undone.</p>
+                {deleteAllError && <p className="mt-3 text-sm text-coral">{deleteAllError}</p>}
+                <div className="mt-5 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => setConfirmingDeleteAll(false)}
+                    disabled={deletingAll}
+                    className="rounded-full border border-white/10 px-4 py-2 text-sm text-mute transition hover:text-cream disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAll}
+                    disabled={deletingAll}
+                    className="rounded-full bg-coral px-5 py-2 text-sm font-medium text-ink transition hover:bg-coral/80 disabled:opacity-50"
+                  >
+                    {deletingAll ? "Deleting..." : "Delete everything"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-16">
-            <h2 className="font-display text-2xl tracking-tight">Recent sessions</h2>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="font-display text-2xl tracking-tight">Recent sessions</h2>
+              {sessions.length > 0 && (
+                <button
+                  onClick={() => { setDeleteAllError(null); setConfirmingDeleteAll(true); }}
+                  className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-mute transition hover:border-coral/40 hover:text-coral"
+                >
+                  Delete all
+                </button>
+              )}
+            </div>
 
             {loading ? (
               <p className="mt-4 text-sm text-mute">Loading...</p>
