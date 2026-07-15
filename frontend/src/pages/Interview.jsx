@@ -41,6 +41,14 @@ export default function Interview() {
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={session.replayLastQuestion}
+                  disabled={session.isMuted || session.isSpeaking || !session.sessionId}
+                  title="Replay question"
+                  className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-mute transition hover:border-white/30 hover:text-cream disabled:opacity-50"
+                >
+                  ↻ Replay
+                </button>
+                <button
                   onClick={session.toggleMute}
                   title={session.isMuted ? "Unmute interviewer" : "Mute interviewer"}
                   className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-mute transition hover:border-white/30 hover:text-cream"
